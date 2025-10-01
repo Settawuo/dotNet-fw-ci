@@ -1,0 +1,53 @@
+name: Build and Release .NET Framework
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up NuGet
+        uses: nuget/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore Settawuo/dotNet-fw-ci.sln
+
+      - name: Build solution
+        run: msbuild Settawuo/dotNet-fw-ci.sln /p:Configuration=Release
+
+      - name: Archive build output
+        run: |
+          mkdir build-output
+          copy /Y /B /S .\**\bin\Release\* build-output\
+        shell: cmd
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: build-output
+
+  release:
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build-output/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
