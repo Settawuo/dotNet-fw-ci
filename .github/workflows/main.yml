@@ -2,8 +2,7 @@ name: Build and Release .NET Framework
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -11,29 +10,33 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up NuGet
+      - name: Setup NuGet
         uses: nuget/setup-nuget@v2
 
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
       - name: Restore NuGet packages
-        run: nuget restore Settawuo/Web-Application-CICD.sln
+        shell: pwsh
+        run: nuget restore "Web-Application-CICD.sln"
 
-      - name: Build solution
-        run: msbuild Settawuo/Web-Application-CICD.sln /p:Configuration=Release
-
-      - name: Archive build output
-        run: |
-          mkdir build-output
-          copy /Y /B /S .\**\bin\Release\* build-output\
-        shell: cmd
+      - name: Build solution (Release)
+        shell: pwsh
+        run: >
+          msbuild "Web-Application-CICD.sln"
+          /m
+          /p:Configuration=Release
+          /p:Platform="Any CPU"
+          /p:OutDir="${{ github.workspace }}\out\"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-output
-          path: build-output
+          path: out\
 
   release:
     needs: build
@@ -48,6 +51,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build-output/**
+          files: build-output/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
