@@ -18,10 +18,10 @@ jobs:
         uses: nuget/setup-nuget@v2
 
       - name: Restore NuGet packages
-        run: nuget restore Settawuo/dotNet-fw-ci.sln
+        run: nuget restore Settawuo/Web-Application-CICD.sln
 
       - name: Build solution
-        run: msbuild Settawuo/dotNet-fw-ci.sln /p:Configuration=Release
+        run: msbuild Settawuo/Web-Application-CICD.sln /p:Configuration=Release
 
       - name: Archive build output
         run: |
